@@ -72,15 +72,15 @@ def computeCounterArray(path: str):
         for example in word.examples:
             i = i + 1
             syn = lesk(example.sentence.split(), word.word, None, wordSynsets)
-            for i in range(0, len(wordSynsets)):
-                if wordSynsets[i] == syn:
-                    disambiguationArray[example.meaning - 1][i] = disambiguationArray[example.meaning - 1][i] + 1
+            for j in range(0, len(wordSynsets)):
+                if wordSynsets[j] == syn:
+                    disambiguationArray[example.meaning - 1][j] = disambiguationArray[example.meaning - 1][j] + 1
         return disambiguationArray
     else:
         return None
 
 
-def computeAverageAccuracy(path: str):
+def computeAverageAccuracy(path: str, printRelsult: bool = True):
     word = Word(path)
     wordSynsets = wn.synsets(word.word)
     counter = computeCounterArray(path)
@@ -94,18 +94,24 @@ def computeAverageAccuracy(path: str):
             meaningAccuracy = maximum / total
             totalAccuracy = totalAccuracy + meaningAccuracy
 
-            print(f"M{index + 1} was disambiguated as:")
+            if printRelsult:
+                print(f"M{index + 1} was disambiguated as:")
             for j in range(len(wordSynsets)):
-                print(f"{counter[index][j]} times as the synset {wordSynsets[j]}")
+                if printRelsult:
+                    print(f"{counter[index][j]} times as the synset {wordSynsets[j]}")
             for j in range(0, len(wordSynsets)):
                 if maximum == counter[index][j]:
-                    print(f"M{index + 1} has an accuracy of {'{:2.2f}'.format(meaningAccuracy * 100)}" \
-                          f"% corresponding to the synset {wordSynsets[j]}")
+                    if printRelsult:
+                        print(f"M{index + 1} has an accuracy of {'{:2.2f}'.format(meaningAccuracy * 100)}" \
+                              f"% corresponding to the synset {wordSynsets[j]}")
         totalAccuracy = totalAccuracy / len(counter)
-        print(f"\nThe word {word.word} has an average accuracy equals to {'{:2.2f}'.format(totalAccuracy * 100)}%\n")
+        if printRelsult:
+            print(
+                f"\nThe word {word.word} has an average accuracy equals to {'{:2.2f}'.format(totalAccuracy * 100)}%\n")
         return totalAccuracy
     else:
-        print(f"The word {word.word} is not in the Wordnet database\n")
+        if printRelsult:
+            print(f"The word {word.word} is not in the Wordnet database\n")
         return None
 
 
@@ -117,7 +123,7 @@ def getfileListFromDirectory(directoryPath: str):
     return files
 
 
-def computeAcronymsAverageAccuracy(numberOfAcronyms: int):
+def computeAcronymsAverageAccuracy(numberOfAcronyms: int, printintermediateResult: bool = False):
     directoryPath = "acronyms"
     files = set(getfileListFromDirectory(directoryPath))
     selectedFiles = random.sample(files, numberOfAcronyms)
@@ -126,7 +132,7 @@ def computeAcronymsAverageAccuracy(numberOfAcronyms: int):
     totalAccuracy = 0
     for file in selectedFiles:
         # print(f"file : {file}")
-        tempAccuracy = computeAverageAccuracy(file)
+        tempAccuracy = computeAverageAccuracy(file, printintermediateResult)
         if tempAccuracy == None:
             errorCounter = errorCounter + 1
         else:
@@ -143,7 +149,7 @@ def computeTermsAverageAccuracy(numberOfAcronyms: int):
     errorCounter = 0
     totalAccuracy = 0
     for file in selectedFiles:
-        print(f"file : {file}")
+        # print(f"file : {file}")
         tempAccuracy = computeAverageAccuracy(file)
         if tempAccuracy == None:
             errorCounter = errorCounter + 1
@@ -154,12 +160,12 @@ def computeTermsAverageAccuracy(numberOfAcronyms: int):
 
 
 numberOfElements = 10
-acronymsAverage, acronymsError = computeAcronymsAverageAccuracy(numberOfElements)
-print(
-    f"for {numberOfElements} acronyms: {'{:2.2f}'.format(acronymsAverage * 100)}% considering {acronymsError} missing from the wordnet database")
+acronymsAverage, acronymsError = computeAcronymsAverageAccuracy(len(getfileListFromDirectory("acronyms")))
+# print(
+#    f"for {numberOfElements} acronyms: {'{:2.2f}'.format(acronymsAverage * 100)}% considering {acronymsError} missing from the wordnet database")
 # termsAverage, termsError = computeTermsAverageAccuracy(numberOfElements)
 # print(f"for {numberOfElements} terms: {'{:2.2f}'.format(termsAverage * 100)}% considering {termsError} missing from the wordnet database")
 
 
 # print(f"last result : {'{:2.2f}'.format(computeTermsAverageAccuracy(50) * 100)}%")
-# computeAverageAccuracy("acronyms/US_pmids_tagged.arff")
+#computeAverageAccuracy("acronyms/US_pmids_tagged.arff")
