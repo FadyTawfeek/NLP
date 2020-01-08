@@ -1,6 +1,6 @@
 # NLP
 
-WordSense Disambiguation in Medical Context, please read the documentation to get a link for the dataset as it is not freely published, you will find it in section 4 of the dataset.
+WordSense Disambiguation in Medical Context, please read the documentation to get a link for the dataset as it is not freely published, you will find it in section 4 of the dataset (end of page 2)
 
 
 We used pywsd, a Python Implementations of Word Sense Disambiguation (WSD) Technologies we modified some parts to fit our needs.
