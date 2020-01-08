@@ -13,7 +13,7 @@ print(f"cosine lesk : {l.cosine_lesk(sentence, ambiguousWord)}")
 print(f"simple lesk : {l.simple_lesk(sentence, ambiguousWord)}")
 
 
-def getTheAmbiguousSynset(disambiguateSentenceArray):
+def getTheAmbiguousSynset(disambiguateSentenceArray, ambiguousWord=ambiguousWord):
     for element in disambiguateSentenceArray:
         if element[0] == ambiguousWord:
             return element[2]
