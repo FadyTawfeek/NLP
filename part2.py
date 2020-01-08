@@ -172,7 +172,7 @@ def computeAcronymsAverageAccuracy(numberOfAcronyms: int, printintermediateResul
     compute the average accuracy for files in the acronyms directory
     :param numberOfAcronyms: number of random acronyms selected
     :param printintermediateResult: boolean value to print intermediate result for each files
-    :return: totalAccuracy: the percent of accuracy; errorCounter : the number of file that can't be computed (not in Wordnet)
+    :return: totalAccuracy: the percent of the disambiguation accuracy; errorCounter : the number of file that can't be computed (not in Wordnet)
     """
     directoryPath = "acronyms"
     files = set(getfileListFromDirectory(directoryPath))
