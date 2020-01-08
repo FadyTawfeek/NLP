@@ -1,26 +1,41 @@
 import os
 import random
 import re
+
 import numpy as np
-
-import nltk
-from nltk.wsd import lesk
 from nltk.corpus import wordnet as wn
+from nltk.wsd import lesk
 
+# regex to represent the tag < > around the ambiguous word
 TAG_REGEX = re.compile(r'<[^>]+>')
 
 
+# function to remove tags from a string
 def removeTags(line: str):
     return TAG_REGEX.sub('', line)
 
 
 class Example():
+    """
+    class which associate a sentence and a meaning number according to the dataset
+    sentence : string of a sentence where the example word is used
+    meaning : an integer which corresponds to the meaning number at the end of the example in the dataset
+    """
+
     def __init__(self, sentence: str, meaning: int):
         self.sentence = sentence
         self.meaning = meaning
 
 
 class Word():
+    """
+    class which parse a file to be understandable and usable by our program
+    path : string of the path of the file
+    word : string of the ambiguous word
+    examples : list of Example objects
+    meaningNumber : integer which represents amount of meaning associated with the word
+    """
+
     def __init__(self, path: str):
         self.path = path
         self.word = self.getWordnameFromFilename()
@@ -29,12 +44,21 @@ class Word():
         self.parseFileToArray()
 
     def getWordnameFromFilename(self):
+        """
+        get the string of the word from the name of the file
+        :return: the string of the word
+        """
         filename = os.path.basename(self.path)
         filename = os.path.splitext(filename)
         word = filename[0].split('_')
         return word[0]
 
     def parseLineToExample(self, line: str):
+        """
+        parse each line inside an Example object
+        :param line: string of a line from a file of the dataset
+        :return: an Example Object of the line parsed
+        """
         begining = line.index("\"")
         tempString = line[begining + 1:]
         meaningNumber = (int)(line[-2:-1])
@@ -43,6 +67,10 @@ class Word():
         return Example(tempString, meaningNumber)
 
     def parseFileToArray(self):
+        """
+        parse the whole file to a Word object
+        :return: nothing
+        """
         # open the file
         file = open(self.path, "r+")
         lines = file.readlines()
@@ -64,6 +92,11 @@ class Word():
 
 
 def computeCounterArray(path: str):
+    """
+    compute an result array to represent the synsets disambiguation by the meaning inside the dataset
+    :param path: string of the path of the file
+    :return: the array of the synsets by meaning numbers
+    """
     word = Word(path)
     wordSynsets = wn.synsets(word.word)
     if len(wordSynsets) != 0:
@@ -81,6 +114,12 @@ def computeCounterArray(path: str):
 
 
 def computeAverageAccuracy(path: str, printRelsult: bool = True):
+    """
+    Compute the average accuracy for a file
+    :param path: path to a file associated to a word
+    :param printRelsult: boolean to specify if you want to print the intermediate result
+    :return: the percent accuracy
+    """
     word = Word(path)
     wordSynsets = wn.synsets(word.word)
     counter = computeCounterArray(path)
@@ -116,6 +155,11 @@ def computeAverageAccuracy(path: str, printRelsult: bool = True):
 
 
 def getfileListFromDirectory(directoryPath: str):
+    """
+    get the list strings which represent the list of filename from a directory
+    :param directoryPath: string of the path to the directory
+    :return: a list of files path inside it
+    """
     files = []
     for r, d, f in os.walk(directoryPath):
         for file in f:
@@ -124,6 +168,12 @@ def getfileListFromDirectory(directoryPath: str):
 
 
 def computeAcronymsAverageAccuracy(numberOfAcronyms: int, printintermediateResult: bool = False):
+    """
+    compute the average accuracy for files in the acronyms directory
+    :param numberOfAcronyms: number of random acronyms selected
+    :param printintermediateResult: boolean value to print intermediate result for each files
+    :return: totalAccuracy: the percent of accuracy; errorCounter : the number of file that can't be computed (not in Wordnet)
+    """
     directoryPath = "acronyms"
     files = set(getfileListFromDirectory(directoryPath))
     selectedFiles = random.sample(files, numberOfAcronyms)
@@ -141,31 +191,35 @@ def computeAcronymsAverageAccuracy(numberOfAcronyms: int, printintermediateResul
     return totalAccuracy, errorCounter
 
 
-def computeTermsAverageAccuracy(numberOfAcronyms: int):
+def computeTermsAverageAccuracy(numberOfTerms: int, printintermediateResult: bool = False):
+    """
+    compute the average accuracy for files in the terms directory
+    :param numberOfTerms: number of random terms selected
+    :param printintermediateResult: boolean value to print intermediate result for each files
+    :return: totalAccuracy: the percent of accuracy; errorCounter : the number of file that can't be computed (not in Wordnet)
+    """
     directoryPath = "terms"
     files = set(getfileListFromDirectory(directoryPath))
-    selectedFiles = random.sample(files, numberOfAcronyms)
+    selectedFiles = random.sample(files, numberOfTerms)
     # print(f"samples : {selectedFiles}")
     errorCounter = 0
     totalAccuracy = 0
     for file in selectedFiles:
         # print(f"file : {file}")
-        tempAccuracy = computeAverageAccuracy(file)
+        tempAccuracy = computeAverageAccuracy(file, printintermediateResult)
         if tempAccuracy == None:
             errorCounter = errorCounter + 1
         else:
             totalAccuracy = totalAccuracy + tempAccuracy
-    totalAccuracy = totalAccuracy / (numberOfAcronyms - errorCounter)
+    totalAccuracy = totalAccuracy / (numberOfTerms - errorCounter)
     return totalAccuracy, errorCounter
 
 
 numberOfElements = 10
-acronymsAverage, acronymsError = computeAcronymsAverageAccuracy(len(getfileListFromDirectory("acronyms")))
-# print(
-#    f"for {numberOfElements} acronyms: {'{:2.2f}'.format(acronymsAverage * 100)}% considering {acronymsError} missing from the wordnet database")
-# termsAverage, termsError = computeTermsAverageAccuracy(numberOfElements)
-# print(f"for {numberOfElements} terms: {'{:2.2f}'.format(termsAverage * 100)}% considering {termsError} missing from the wordnet database")
+acronymsAverage, acronymsError = computeAcronymsAverageAccuracy(numberOfElements)
+print(
+    f"for {numberOfElements} acronyms: {'{:2.2f}'.format(acronymsAverage * 100)}% considering {acronymsError} missing from the wordnet database")
 
-
-# print(f"last result : {'{:2.2f}'.format(computeTermsAverageAccuracy(50) * 100)}%")
-#computeAverageAccuracy("acronyms/US_pmids_tagged.arff")
+termsAverage, termsError = computeTermsAverageAccuracy(numberOfElements)
+print(
+    f"for {numberOfElements} terms: {'{:2.2f}'.format(termsAverage * 100)}% considering {termsError} missing from the wordnet database")
