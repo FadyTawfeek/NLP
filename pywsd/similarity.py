@@ -111,8 +111,13 @@ def max_similarity(context_sentence: str, ambiguous_word: str, option="path",
         context_sentence = word_tokenize(context_sentence)
     else:
         context_sentence = [lemmatize(w) for w in word_tokenize(context_sentence)]
+    #add to check the pos tag lead to an empty synsets
+    if not wn.synsets(ambiguous_word, pos=pos):
+        ambiguousSynset = wn.synsets(ambiguous_word)
+    else:
+        ambiguousSynset = wn.synsets(ambiguous_word, pos=pos)
     result = {}
-    for i in wn.synsets(ambiguous_word):
+    for i in ambiguousSynset:
         result[i] = 0
         for j in context_sentence:
             _result = [0]
