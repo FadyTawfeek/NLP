@@ -43,5 +43,4 @@ for x1 in phonetic_words:
 
 mean = temp_res/length
 mean_new = 4-mean
-print (mean)
 print (mean_new)
