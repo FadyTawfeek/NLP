@@ -3,6 +3,111 @@ from tkinter import messagebox
 
 from pywsd import lesk as l
 from pywsd.similarity import max_similarity as maxsim
+from nltk.corpus import wordnet as wn
+from pywsd import lemmatize, word_tokenize, sim
+import fuzzy
+
+
+def levenshtein(s1, s2):
+    """
+    the function for the getting the phonetic distance between 2 words
+    :param s1: string of the word 1
+    :param s2: string of the word 2
+    :return: a float value which is the phonetic distance between the 2 words
+    """
+    if len(s1) > len(s2):
+        s1, s2 = s2, s1
+    distances = range(len(s1) + 1)
+    for index2, char2 in enumerate(s2):
+        newDistances = [index2 + 1]
+        for index1, char1 in enumerate(s1):
+            if char1 == char2:
+                newDistances.append(distances[index1])
+            else:
+                newDistances.append(1 + min((distances[index1], distances[index1 + 1], newDistances[-1])))
+        distances = newDistances
+    return distances[-1]
+
+
+def fuzzy_output(wanted_sentence, wanted_word):
+    """
+    the function for the getting the mean phonetic distance between an ambiguous word and each word from the sentence
+    :param wanted_sentence: the string of the context sentence
+    :param wanted_word: the string of the ambiguous word
+    :return: the mean phonetic distance between an ambiguous word and each word from the sentence
+    """
+    temp_res = 0
+
+    phonetic_words = []
+    example = wanted_sentence
+    target_word = wanted_word
+    soundex = fuzzy.Soundex(4)
+    target_word = soundex(target_word)
+    words = example.split()
+    our_length = len(words)
+    arr = [[0 for i in range(our_length)] for j in range(our_length)]
+    # print (words)
+
+    for z in words:
+        soundex = fuzzy.Soundex(4)
+        z = soundex(z)
+        phonetic_words.append(z)
+
+    for x1 in phonetic_words:
+        arr[phonetic_words.index(x1)] = levenshtein(target_word, x1)
+        temp_res += int(arr[phonetic_words.index(x1)])
+
+    mean = temp_res / our_length
+    mean_new = 4 - mean
+    # print (mean_new)
+    return mean_new
+
+
+def newMaxSimilarity(context_sentence: str, ambiguous_word: str, option="path", lemma=True, context_is_lemmatized=False,
+                     pos=None, best=True) -> "wn.Synset":
+    """
+    Perform WSD by maximizing the sum of maximum similarity between possible
+    synsets of all words in the context sentence and the possible synsets of the
+    ambiguous words (see https://ibin.co/4gG9zUlejUUA.png):
+    {argmax}_{synset(a)}(\sum_{i}^{n}{{max}_{synset(i)}(sim(i,a))}
+
+    :param context_sentence: String, a sentence.
+    :param ambiguous_word: String, a single word.
+    :return: If best, returns only the best Synset, else returns a dict.
+    """
+    ambiguous_word = lemmatize(ambiguous_word)
+    # If ambiguous word not in WordNet return None
+    if not wn.synsets(ambiguous_word):
+        return None
+    if context_is_lemmatized:
+        context_sentence = word_tokenize(context_sentence)
+    else:
+        context_sentence = [lemmatize(w) for w in word_tokenize(context_sentence)]
+    # add to check the pos tag lead to an empty synsets
+    if not wn.synsets(ambiguous_word, pos=pos):
+        ambiguousSynset = wn.synsets(ambiguous_word)
+    else:
+        ambiguousSynset = wn.synsets(ambiguous_word, pos=pos)
+    result = {}
+    for i in ambiguousSynset:
+        result[i] = 0
+        for j in context_sentence:
+            _result = [0]
+            for k in wn.synsets(j):
+                _result.append(sim(i, k, option))
+            if option == "path":
+                phonecticResult = fuzzy_output(ambiguous_word, j) / 2
+                result[i] += 0.5 * phonecticResult
+                result[i] += 0.5 * max(_result)
+            else:
+                result[i] += max(_result)
+
+    if option in ["res", "resnik"]:  # lower score = more similar
+        result = sorted([(v, k) for k, v in result.items()])
+    else:  # higher score = more simila  r
+        result = sorted([(v, k) for k, v in result.items()], reverse=True)
+
+    return result[0][1] if best else result
 
 
 class Window(Frame):
@@ -53,6 +158,7 @@ class Window(Frame):
         self.algorithmList.insert(3, "Cosine Lesk")
         self.algorithmList.insert(4, "Path-Semantic Similarity")
         self.algorithmList.insert(5, "Information content-semantic similarity")
+        self.algorithmList.insert(6, "Path-Semantic with phonetics Similarity")
 
         self.algorithmList.place(x=50, y=20)
 
@@ -140,11 +246,9 @@ class Window(Frame):
         do the disambiguation according to the sentence panel, the ambiguousWord panel and the algorithm selected
         :return: wn.Synset
         """
-
         self.sentence = self.getContext()
         self.ambiguousWord = self.getAmbiguousWord()
         selectedAlgorithm = self.algorithmList.curselection()
-
         if not self.sentence:
             print("No sentence written. Please write a context sentence")
             messagebox.showerror("Error", "No sentence written. Please write a context sentence")
@@ -175,9 +279,10 @@ class Window(Frame):
             result = maxsim(self.sentence, self.ambiguousWord, option="path")
         elif selectedAlgorithm[0] == 5:  # Information content-semantic similarity
             result = maxsim(self.sentence, self.ambiguousWord, option="resnik")
+        elif selectedAlgorithm[0] == 6:  # path-semantic mixed with phonetic similarity
+            result = newMaxSimilarity(self.sentence, self.ambiguousWord, option="path")
 
         self.printResult(result)
-
 
 root = Tk()
 root.geometry("800x600")
