@@ -18,3 +18,6 @@ pip install requirements.txt
 * download the dataset from the repport or ask the official owner with this link ()
 * go in the main file and be sure you are running the import utils the first time (you can comment it after, you just need to run it once)
 * choose the parts of our project you want to use. The GUI is part 7. For others please check the description (https://github.com/Wa-wann/NLP/blob/master/project-description.md)
+
+-------------------------------------------------
+![GUI application](GUI_example.PNG "GUI application")
