@@ -302,7 +302,7 @@ def newMaxSimilarity(context_sentence: str, ambiguous_word: str, option="path", 
             for k in wn.synsets(j):
                 _result.append(sim(i, k, option))
             if option == "path":
-                phonecticResult = levenshtein(ambiguous_word, j) / 2
+                phonecticResult = fuzzy_output(ambiguous_word, j) / 2
                 result[i] += 0.5 * phonecticResult
                 result[i] += 0.5 * max(_result)
             else:
