@@ -16,7 +16,7 @@ elif selected_part == 3:
 elif selected_part == 4:
     import part4
 elif selected_part == 5:
-    import part5_2
+    import part5
 elif selected_part == 6:
     import part6
 elif selected_part == 7:
