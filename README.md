@@ -1,4 +1,4 @@
-# NLP
+# Natural Language processing project made for a course in University of Oulu, its purpose is to investigate into words, depending on its meaning, word family, context, and so on.
 
 WordSense Disambiguation in Medical Context, please read the documentation to get a link for the dataset as it is not freely published, you will find it in section 4 of the dataset (end of page 2)
 
